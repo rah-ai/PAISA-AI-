@@ -77,7 +77,7 @@ function MiniSignalRow({ signal }) {
 }
 
 export default function Dashboard() {
-  const { portfolioData, signals, loadSampleData, refreshSignals, isLoading } = usePortfolio();
+  const { portfolioData, signals, loadSampleData, refreshSignals, chatMessages, sendChatMessage, isLoading } = usePortfolio();
 
   useEffect(() => {
     // If we land here but absolutely no data exists, we rely on DashboardLayout's EmptyState now.
