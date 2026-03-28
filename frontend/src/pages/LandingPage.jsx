@@ -152,16 +152,16 @@ export default function LandingPage() {
 
       {/* ─── HERO ─── */}
       <section className="relative min-h-screen flex items-center overflow-hidden" style={{ background: 'var(--bg-void)', paddingTop: 64 }}>
-        <motion.span style={{ y: rupeeY }} className="absolute -bottom-20 -left-10 font-serif-display select-none pointer-events-none" aria-hidden>
-          <span style={{ fontSize: 'clamp(300px, 40vw, 600px)', color: 'var(--bg-raised)', lineHeight: 1, opacity: 0.5 }}>₹</span>
+        <motion.span style={{ y: rupeeY }} className="absolute -bottom-20 -left-10 font-serif-display select-none pointer-events-none z-0" aria-hidden>
+          <span style={{ fontSize: 'clamp(300px, 40vw, 600px)', color: 'var(--bg-border)', lineHeight: 1, opacity: 0.4 }}>₹</span>
         </motion.span>
-        <motion.div style={{ y: linesY }} className="absolute inset-0 pointer-events-none">
-          <div className="absolute w-full h-px" style={{ top: '30%', background: 'var(--bg-border)' }} />
-          <div className="absolute w-full h-px" style={{ top: '60%', background: 'var(--bg-border)' }} />
-          <div className="absolute w-full h-px" style={{ top: '80%', background: 'var(--bg-border)' }} />
+        <motion.div style={{ y: linesY }} className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute w-full h-px" style={{ top: '30%', background: 'var(--bg-border)', opacity: 0.6 }} />
+          <div className="absolute w-full h-px" style={{ top: '60%', background: 'var(--bg-border)', opacity: 0.6 }} />
+          <div className="absolute w-full h-px" style={{ top: '80%', background: 'var(--bg-border)', opacity: 0.6 }} />
         </motion.div>
 
-        <div className="max-w-[1400px] mx-auto w-full px-6 flex items-center gap-16" style={{ minHeight: 'calc(100vh - 64px)' }}>
+        <div className="max-w-[1400px] mx-auto w-full px-6 flex items-center gap-16 relative z-10" style={{ minHeight: 'calc(100vh - 64px)' }}>
           <div className="w-[55%]">
             <CurtainReveal className="-mt-8 -mb-4">
               <h1 className="font-display-italic pt-8 pb-4" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
