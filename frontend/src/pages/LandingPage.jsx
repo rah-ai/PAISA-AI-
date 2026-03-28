@@ -353,6 +353,7 @@ export default function LandingPage() {
                 { model: 'Gemini 2.0 Flash', role: 'Quick chat responses, real-time market Q&A, portfolio summaries', tag: 'SPEED' },
                 { model: 'Groq Llama 3.3 70B', role: 'Signal analysis, pattern detection, bulk deal confidence scoring', tag: 'FALLBACK' },
                 { model: 'DeepSeek R1', role: 'Complex mathematical reasoning, XIRR edge cases, tax calculations', tag: 'REASONING' },
+                { model: 'Ollama Mistral:latest', role: 'Local deep research, unlimited secure screening, absolute fallback agent', tag: 'LOCAL' },
               ].map((row, i) => (
                 <ElasticSpring key={i} delay={i * 0.1}>
                   <div className="card flex items-center gap-6" style={{ padding: 20 }}>
