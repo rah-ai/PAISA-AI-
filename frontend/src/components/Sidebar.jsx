@@ -100,8 +100,9 @@ const navItems = [
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { portfolioData } = usePortfolio();
+  const { portfolioData, uploadPortfolio, isLoading } = usePortfolio();
   const { user, logout } = useAuth();
+  const fileInputRef = React.useRef(null);
 
   const { ref: scrambleRef } = useScramble({
     text: 'PAISA',
@@ -118,6 +119,13 @@ export default function Sidebar() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) await uploadPortfolio(file);
+    // Reset file input so same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const initials = user?.initials || 'U';
@@ -176,6 +184,32 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
+        
+        {portfolioData && (
+          <div className="mt-4">
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf,.csv" className="hidden" />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-1.5 rounded-md transition-colors"
+              style={{ 
+                background: 'rgba(201,168,76,0.1)', 
+                border: '1px solid rgba(201,168,76,0.2)',
+                color: 'var(--gold-mid)',
+                opacity: isLoading ? 0.6 : 1,
+                fontSize: 11,
+                fontWeight: 500
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              {isLoading ? 'Syncing...' : 'Update CAS'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
