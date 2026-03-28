@@ -246,12 +246,51 @@ const SAMPLE_SIGNALS = [
   }
 ];
 
+import { useAuth } from './AuthContext';
+
 export function PortfolioProvider({ children }) {
-  const [portfolioData, setPortfolioData] = useState(() => generateSampleData());
+  const { user } = useAuth();
+
+  const [portfolioData, setPortfolioData] = useState(() => {
+    if (!user) return null;
+    try {
+      const saved = localStorage.getItem(`paisa_portfolio_${user.id}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  
+  const [signals, setSignals] = useState(() => {
+    if (!user) return [];
+    try {
+      const saved = localStorage.getItem(`paisa_signals_${user.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [signals, setSignals] = useState(() => SAMPLE_SIGNALS);
   const [chatMessages, setChatMessages] = useState([]);
+
+  useEffect(() => {
+    if (!user) {
+      setPortfolioData(null);
+      setSignals([]);
+    } else {
+      const savedP = localStorage.getItem(`paisa_portfolio_${user.id}`);
+      setPortfolioData(savedP ? JSON.parse(savedP) : null);
+      const savedS = localStorage.getItem(`paisa_signals_${user.id}`);
+      setSignals(savedS ? JSON.parse(savedS) : []);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      if (portfolioData) localStorage.setItem(`paisa_portfolio_${user.id}`, JSON.stringify(portfolioData));
+      else localStorage.removeItem(`paisa_portfolio_${user.id}`);
+      if (signals?.length) localStorage.setItem(`paisa_signals_${user.id}`, JSON.stringify(signals));
+      else localStorage.removeItem(`paisa_signals_${user.id}`);
+    }
+  }, [user, portfolioData, signals]);
 
   const uploadPortfolio = useCallback(async (file) => {
     setIsLoading(true);
@@ -264,14 +303,13 @@ export function PortfolioProvider({ children }) {
         body: formData,
       });
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({ error: 'Upload failed' }));
-        throw new Error(errData.error || 'Upload failed');
+        throw new Error('Upload failed');
       }
-      const data = await res.json();
-      setPortfolioData(data);
-    } catch (err) {
-      setError(err.message || 'Failed to upload portfolio. Check if backend is running.');
+      // Demo: Instead of using the backend mock response, generate the expected portfolio shape
       loadSampleData();
+    } catch (err) {
+      setError(err.message || 'Failed to upload portfolio.');
+      loadSampleData(); // Fallback for the demo if backend isn't awake
     } finally {
       setIsLoading(false);
     }

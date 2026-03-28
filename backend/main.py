@@ -247,6 +247,22 @@ async def rebalance(request: dict):
         raise HTTPException(status_code=500, detail=f"Rebalancing error: {str(e)}")
 
 
+@app.post("/api/upload")
+async def upload_cas(file: UploadFile = File(...)):
+    """Mock endpoint to handle CAS uploaded by the user during demo."""
+    # In a real app, this would use pdfplumber to parse the CAS and extract the portfolio.
+    # For the hackathon, we simulate a 1-second extraction and return success.
+    import asyncio
+    await asyncio.sleep(1)
+    
+    # We return a successful message, the frontend actually has generateSampleData() built-in
+    # to populate the React context safely without needing the whole JSON dumped from the backend.
+    # But just in case, we return a mock structure.
+    return {
+        "message": f"Successfully parsed {file.filename}",
+        "status": "success"
+    }
+
 @app.post("/api/predict")
 async def predict(request: dict):
     """ML stock price prediction — Linear Regression + Technical Analysis."""
