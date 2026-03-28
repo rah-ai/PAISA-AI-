@@ -131,8 +131,31 @@ function generateOverlapMatrix(funds) {
   return matrix;
 }
 
-function generateSampleData() {
-  const funds = SAMPLE_FUNDS;
+const ALT_FUNDS = [
+  {
+    name: 'HDFC Mid-Cap Opportunities Fund', category: 'Mid Cap', folio: '1234567/01', units: 293.801,
+    purchaseNav: 204.22, currentNav: 272.29, value: 80000, purchaseDate: '2024-01-15', xirr: 24.5, expenseRatio: 1.62,
+    topHoldings: ['HDFC Bank', 'Indian Hotels', 'Max Healthcare', 'Balkrishna Ind', 'The Phoenix Mills']
+  },
+  {
+    name: 'Parag Parikh Flexi Cap Fund', category: 'Flexi Cap', folio: '7654321/08', units: 2676.90,
+    purchaseNav: 65.37, currentNav: 93.39, value: 250000, purchaseDate: '2023-11-05', xirr: 18.2, expenseRatio: 0.89,
+    topHoldings: ['HDFC Bank', 'Bajaj Holdings', 'ITC', 'Coal India', 'Alphabet Inc', 'Microsoft Corp']
+  },
+  {
+    name: 'ICICI Prudential Technology Fund', category: 'Sectoral', folio: '9988776/22', units: 1150.85,
+    purchaseNav: 173.78, currentNav: 260.67, value: 300000, purchaseDate: '2023-08-20', xirr: 15.4, expenseRatio: 2.05,
+    topHoldings: ['Infosys', 'TCS', 'HCL Tech', 'Tech Mahindra', 'Wipro', 'Persistent Systems']
+  },
+  {
+    name: 'SBI Small Cap Fund', category: 'Small Cap', folio: '4455667/11', units: 2850.20,
+    purchaseNav: 175.42, currentNav: 217.52, value: 620000, purchaseDate: '2023-01-10', xirr: 28.1, expenseRatio: 1.82,
+    topHoldings: ['Blue Star', 'Finolex Industries', 'Ratnamani Metals', 'ELIN Electronics', 'Praj Industries']
+  }
+];
+
+function generateSampleData(isAlt = false) {
+  const funds = isAlt ? ALT_FUNDS : SAMPLE_FUNDS;
   const totalValue = funds.reduce((sum, f) => sum + f.value, 0);
   const weightedXirr = funds.reduce((sum, f) => sum + (f.value / totalValue) * f.xirr, 0);
   const expenseDrag = funds.reduce((sum, f) => sum + f.units * f.currentNav * (f.expenseRatio / 100), 0);
@@ -305,21 +328,22 @@ export function PortfolioProvider({ children }) {
       if (!res.ok) {
         throw new Error('Upload failed');
       }
-      // Demo: Instead of using the backend mock response, generate the expected portfolio shape
-      loadSampleData();
+      // Demo: Generate alternative data representing the newly uploaded CAS
+      loadSampleData(true);
     } catch (err) {
       setError(err.message || 'Failed to upload portfolio.');
-      loadSampleData(); // Fallback for the demo if backend isn't awake
+      loadSampleData(true); // Fallback to alternative data for the demo
+
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const loadSampleData = useCallback(() => {
+  const loadSampleData = useCallback((isAlt = false) => {
     setIsLoading(true);
     setError(null);
     setTimeout(() => {
-      setPortfolioData(generateSampleData());
+      setPortfolioData(generateSampleData(isAlt === true));
       setSignals(SAMPLE_SIGNALS);
       setIsLoading(false);
     }, 1500);
