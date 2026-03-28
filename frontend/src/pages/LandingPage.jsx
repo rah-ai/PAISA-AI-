@@ -163,18 +163,18 @@ export default function LandingPage() {
 
         <div className="max-w-[1400px] mx-auto w-full px-6 flex items-center gap-16" style={{ minHeight: 'calc(100vh - 64px)' }}>
           <div className="w-[55%]">
-            <CurtainReveal>
-              <h1 className="font-display-italic" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--text-primary)', paddingBottom: '0.1em', marginBottom: '-0.1em' }}>
+            <CurtainReveal className="-mt-8 -mb-4">
+              <h1 className="font-display-italic pt-8 pb-4" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                 Your portfolio.
               </h1>
             </CurtainReveal>
-            <CurtainReveal delay={0.12}>
-              <h1 className="font-display-italic" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--gold-mid)', paddingBottom: '0.1em', marginBottom: '-0.1em' }}>
+            <CurtainReveal delay={0.12} className="-mt-8 -mb-4">
+              <h1 className="font-display-italic pt-8 pb-4" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--gold-mid)' }}>
                 Decoded.
               </h1>
             </CurtainReveal>
-            <CurtainReveal delay={0.24}>
-              <h1 className="font-display-italic" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--text-primary)', paddingBottom: '0.1em', marginBottom: '-0.1em' }}>
+            <CurtainReveal delay={0.24} className="-mt-8 -mb-4">
+              <h1 className="font-display-italic pt-8 pb-4" style={{ fontSize: 'clamp(48px, 5.5vw, 80px)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                 In 10 seconds.
               </h1>
             </CurtainReveal>
