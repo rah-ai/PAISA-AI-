@@ -77,12 +77,25 @@ function MiniSignalRow({ signal }) {
 }
 
 export default function Dashboard() {
-  const { portfolioData, signals, loadSampleData, refreshSignals, chatMessages, sendChatMessage } = usePortfolio();
+  const { portfolioData, signals, loadSampleData, refreshSignals, isLoading } = usePortfolio();
 
   useEffect(() => {
-    if (!portfolioData) loadSampleData();
+    // If we land here but absolutely no data exists, we rely on DashboardLayout's EmptyState now.
     if (signals.length === 0) refreshSignals();
-  }, []);
+  }, [signals.length, refreshSignals]);
+
+  if (isLoading) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="flex flex-col items-center justify-center w-full h-full min-h-[80vh]"
+      >
+        <div className="w-12 h-12 border-2 rounded-full animate-spin mb-6" style={{ borderColor: 'var(--bg-raised)', borderTopColor: 'var(--gold-mid)' }}></div>
+        <h2 className="font-serif-display mb-2" style={{ fontSize: 24, color: 'var(--text-primary)' }}>Extracting CAS Data</h2>
+        <p className="font-mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Using intelligent OCR to parse folio details...</p>
+      </motion.div>
+    );
+  }
 
   const pd = portfolioData;
   const allocationData = pd?.funds?.map(f => ({
@@ -92,7 +105,7 @@ export default function Dashboard() {
   })) || [];
 
   return (
-    <div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-serif-display" style={{ fontSize: 28, color: 'var(--text-primary)' }}>Dashboard</h1>
@@ -250,6 +263,6 @@ export default function Dashboard() {
           </div>
         </ClipPathWipe>
       </div>
-    </div>
+    </motion.div>
   );
 }
