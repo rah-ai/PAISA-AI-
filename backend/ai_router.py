@@ -13,6 +13,10 @@ import os
 import json
 import asyncio
 import httpx
+import warnings
+
+# Suppress the noisy google.generativeai deprecation warning for the hackathon
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
 import google.generativeai as genai
 from groq import Groq
 from openai import OpenAI
