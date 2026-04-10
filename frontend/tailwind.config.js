@@ -23,9 +23,9 @@ export default {
         'blue-data': '#3A7FD4',
       },
       fontFamily: {
-        'serif-display': ['"DM Serif Display"', 'serif'],
-        'mono': ['"IBM Plex Mono"', 'monospace'],
-        'sans': ['"DM Sans"', 'sans-serif'],
+        'serif-display': ['"Instrument Serif"', 'serif'],
+        'mono': ['"JetBrains Mono"', 'monospace'],
+        'sans': ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       spacing: {
         '18': '4.5rem',

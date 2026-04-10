@@ -23,10 +23,10 @@ export default function SignupPage() {
   };
 
   const features = [
-    { icon: '⚡', text: 'Portfolio X-Ray with true XIRR' },
-    { icon: '📡', text: 'Real-time Opportunity Radar' },
-    { icon: '🤖', text: 'Multi-model AI Market Chat' },
-    { icon: '🧮', text: 'ML Risk Scoring & Tax Optimization' },
+    'Portfolio X-Ray with true XIRR',
+    'Real-time Opportunity Radar',
+    'Multi-model AI Market Chat',
+    'ML Risk Scoring & Tax Optimization',
   ];
 
   return (
@@ -57,7 +57,7 @@ export default function SignupPage() {
             <span style={{ color: 'var(--gold-mid)' }}>Decoded.</span>
           </p>
           <div className="flex flex-col gap-4">
-            {features.map((f, i) => (
+            {features.map((text, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
@@ -65,8 +65,8 @@ export default function SignupPage() {
                 transition={{ delay: 0.3 + i * 0.1 }}
                 className="flex items-center gap-3"
               >
-                <span style={{ fontSize: 18 }}>{f.icon}</span>
-                <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{f.text}</span>
+                <span style={{ width: 16, height: 1, background: 'var(--gold-mid)', display: 'inline-block', flexShrink: 0 }} />
+                <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{text}</span>
               </motion.div>
             ))}
           </div>
