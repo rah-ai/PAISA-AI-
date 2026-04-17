@@ -245,28 +245,12 @@ export default function PredictorPage() {
             </ResponsiveContainer>
             {/* Chart Usage Guide */}
             <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
-              <div className="flex items-start gap-6">
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 14 }}>🔍</span>
-                  <div>
-                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>ZOOM</div>
-                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag the handles on the slider bar above to zoom into any date range</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 14 }}>👆</span>
-                  <div>
-                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>DETAILS</div>
-                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Hover over any point on the chart to see exact price and date</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 14 }}>↔️</span>
-                  <div>
-                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>PAN</div>
-                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag the center of the slider bar to pan across the timeline</div>
-                  </div>
-                </div>
+              <div className="flex items-center justify-center gap-6">
+                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag slider handles to zoom</span>
+                <span style={{ color: 'var(--bg-border)' }}>|</span>
+                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Hover chart for price details</span>
+                <span style={{ color: 'var(--bg-border)' }}>|</span>
+                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag slider center to pan timeline</span>
               </div>
             </div>
           </div>
