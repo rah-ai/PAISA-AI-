@@ -51,7 +51,10 @@ function ChatMessage({ msg, isLast }) {
           whiteSpace: 'pre-wrap',
         }}
       >
-        {displayed}
+        {msg.role === 'assistant'
+          ? displayed.replace(/\*\*|\*/g, '').replace(/^#+\s/gm, '')
+          : displayed
+        }
         {!done && <span className="pulse-dot inline-block ml-1" style={{ width: 6, height: 6, background: 'var(--gold-mid)', borderRadius: '50%', verticalAlign: 'middle' }} />}
         {done && msg.role === 'assistant' && (
           <div className="mt-3 pt-2" style={{ borderTop: '1px solid var(--bg-border)' }}>

@@ -292,13 +292,13 @@ async def predict(request: dict):
         sma_signals = result['technical_indicators']['sma'].get('crossover_signals', [])
         sma_note = f". {sma_signals[0].split('—')[0].strip()}" if sma_signals else ""
         
-        result["ai_commentary"] = f"""**{result['name']} ({result['symbol']})** is showing a **{trend_text}** trend based on technical analysis. The stock is currently at ₹{result['current_price']:,.2f} with a 7-day target of ₹{p7['target']:,.2f} ({p7['change_pct']:+.1f}%) and 30-day target of ₹{p30['target']:,.2f} ({p30['change_pct']:+.1f}%).
+        result["ai_commentary"] = f"""{result['name']} ({result['symbol']}) is showing a {trend_text} trend based on technical analysis. The stock is currently at \u20b9{result['current_price']:,.2f} with a 7-day target of \u20b9{p7['target']:,.2f} ({p7['change_pct']:+.1f}%) and 30-day target of \u20b9{p30['target']:,.2f} ({p30['change_pct']:+.1f}%).
 
-**Technical Outlook:** RSI at {rsi_val} indicates {rsi_note}. {macd_note}{sma_note}. Volume ratio is {result['volume']['ratio']}x the 20-day average.
+Technical Outlook: RSI at {rsi_val} indicates {rsi_note}. {macd_note}{sma_note}. Volume ratio is {result['volume']['ratio']}x the 20-day average.
 
-**Key Levels:** Watch support at ₹{result['technical_indicators']['support_resistance']['support_1']:,.0f} and resistance at ₹{result['technical_indicators']['support_resistance']['resistance_1']:,.0f}. A break above resistance could signal further upside.
+Key Levels: Watch support at \u20b9{result['technical_indicators']['support_resistance']['support_1']:,.0f} and resistance at \u20b9{result['technical_indicators']['support_resistance']['resistance_1']:,.0f}. A break above resistance could signal further upside.
 
-*Prediction confidence: {p30['confidence']}% based on {result['metadata']['data_points']} data points. This is analysis, not SEBI-registered investment advice.*"""
+Prediction confidence: {p30['confidence']}% based on {result['metadata']['data_points']} data points. This is analysis, not SEBI-registered investment advice."""
 
         return result
 

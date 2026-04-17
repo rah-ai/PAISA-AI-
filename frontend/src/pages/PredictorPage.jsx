@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart, Bar, Brush, ReferenceArea, ReferenceLine } from 'recharts';
 import { BlurReveal, ElasticSpring } from '../components/Animations';
 import { formatINR } from '../utils/formatters';
 
@@ -218,15 +218,20 @@ export default function PredictorPage() {
 
           {/* Price Chart */}
           <div className="card mb-4" style={{ padding: 20 }}>
-            <div className="font-label mb-4" style={{ color: 'var(--text-muted)', fontSize: 9 }}>PRICE CHART · ACTUAL vs PREDICTED</div>
-            <ResponsiveContainer width="100%" height={320}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-label" style={{ color: 'var(--text-muted)', fontSize: 9 }}>PRICE CHART · ACTUAL vs PREDICTED</div>
+              <div className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Drag the slider below to zoom · Scroll to pan</div>
+            </div>
+            <ResponsiveContainer width="100%" height={480}>
               <ComposedChart data={chartData}>
                 <CartesianGrid stroke="var(--bg-border)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval={Math.max(1, Math.floor(chartData.length / 15))} />
-                <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)' }} domain={['auto', 'auto']} tickFormatter={v => `₹${v.toLocaleString('en-IN')}`} />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval={Math.max(1, Math.floor(chartData.length / 18))} />
+                <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)' }} domain={['auto', 'auto']} tickFormatter={v => `₹${v.toLocaleString('en-IN')}`} width={70} />
                 <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 4, fontSize: 11, color: 'var(--text-primary)' }} formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, '']} />
-                <Line type="monotone" dataKey="actual" stroke="var(--blue-data)" strokeWidth={2} dot={false} name="Actual" />
-                <Line type="monotone" dataKey="predicted" stroke="var(--gold-mid)" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Predicted" />
+                <ReferenceLine x={prediction?.chart_data?.actual?.[prediction.chart_data.actual.length - 1]?.date} stroke="var(--gold-dim)" strokeDasharray="3 3" label={{ value: 'Today', position: 'top', fill: 'var(--text-muted)', fontSize: 9 }} />
+                <Line type="monotone" dataKey="actual" stroke="var(--blue-data)" strokeWidth={2} dot={false} name="Actual" connectNulls={false} />
+                <Line type="monotone" dataKey="predicted" stroke="var(--gold-mid)" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Predicted" connectNulls={false} />
+                <Brush dataKey="date" height={28} stroke="var(--gold-dim)" fill="var(--bg-void)" tickFormatter={d => d.slice(5)} startIndex={Math.max(0, chartData.length - 60)} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -279,8 +284,10 @@ export default function PredictorPage() {
           {/* AI Commentary */}
           {p.ai_commentary && (
             <div className="card" style={{ padding: 20 }}>
-              <div className="font-label mb-3" style={{ color: 'var(--gold-mid)', fontSize: 9 }}>AI COMMENTARY · OLLAMA</div>
-              <p className="font-sans" style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{p.ai_commentary}</p>
+              <div className="font-label mb-3" style={{ color: 'var(--gold-mid)', fontSize: 9 }}>AI COMMENTARY</div>
+              <div className="font-sans" style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                {p.ai_commentary.replace(/\*\*|\*/g, '').replace(/^#+\s/gm, '')}
+              </div>
               <div className="mt-3 pt-2" style={{ borderTop: '1px solid var(--bg-border)' }}>
                 <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Model: {p.metadata.model} | Data points: {p.metadata.data_points} | This is analysis, not investment advice.</span>
               </div>

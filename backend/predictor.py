@@ -128,16 +128,26 @@ def _compute_sma_crossovers(prices):
 
 
 def _linear_regression_predict(prices, days_ahead=7):
-    """Predict future prices using Linear Regression."""
+    """
+    Predict future prices using Linear Regression.
+    Anchored to current price — uses regression slope for direction only,
+    so the prediction line starts exactly where the actual line ends.
+    """
+    current_price = float(prices[-1])
+
     if not HAS_SKLEARN or len(prices) < 30:
         # Simple trend extrapolation fallback
         recent = prices[-10:]
         slope = (recent[-1] - recent[0]) / len(recent)
-        predictions = [float(prices[-1] + slope * (i + 1)) for i in range(days_ahead)]
-        return predictions, 0.5  # Low confidence
+        predictions = [current_price + slope * (i + 1) for i in range(days_ahead)]
+        return [round(p, 2) for p in predictions], 0.5
 
-    X = np.arange(len(prices)).reshape(-1, 1)
-    y = np.array(prices)
+    # Use recent 60 trading days for more responsive prediction
+    window = min(60, len(prices))
+    recent_prices = prices[-window:]
+
+    X = np.arange(window).reshape(-1, 1)
+    y = np.array(recent_prices)
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -147,12 +157,15 @@ def _linear_regression_predict(prices, days_ahead=7):
 
     # R² score as confidence
     r2 = model.score(X_scaled, y)
-    confidence = max(0.3, min(0.95, r2))
+    confidence = max(0.3, min(0.95, abs(r2)))
 
-    # Predict future
-    future_X = np.arange(len(prices), len(prices) + days_ahead).reshape(-1, 1)
-    future_X_scaled = scaler.transform(future_X)
-    predictions = model.predict(future_X_scaled).tolist()
+    # Extract per-day slope from the model
+    # slope in original scale = coef / std(X)
+    x_std = np.std(np.arange(window))
+    daily_slope = float(model.coef_[0]) / x_std if x_std > 0 else 0
+
+    # Anchor predictions from current price using the slope
+    predictions = [current_price + daily_slope * (i + 1) for i in range(days_ahead)]
 
     return [round(p, 2) for p in predictions], round(confidence, 3)
 
