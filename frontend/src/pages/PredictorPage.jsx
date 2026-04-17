@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart, Bar, Brush, ReferenceArea, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, ReferenceLine } from 'recharts';
 import { BlurReveal, ElasticSpring } from '../components/Animations';
 import { formatINR } from '../utils/formatters';
 
@@ -108,7 +108,6 @@ export default function PredictorPage() {
   const chartData = prediction ? (() => {
     const actualPoints = prediction.chart_data.actual.map(d => ({ ...d, actual: d.price }));
     const predictedPoints = prediction.chart_data.predicted.map(d => ({ ...d, predicted: d.price }));
-    // Bridge: add last actual price as the first predicted point so the line connects smoothly
     const lastActual = actualPoints[actualPoints.length - 1];
     if (lastActual && predictedPoints.length > 0) {
       const bridge = { date: lastActual.date, predicted: lastActual.actual, actual: lastActual.actual };
@@ -116,6 +115,56 @@ export default function PredictorPage() {
     }
     return [...actualPoints, ...predictedPoints];
   })() : [];
+
+  // Zoom state: how many data points to show from the END of the data
+  const [zoomWindow, setZoomWindow] = useState(60);
+  const chartRef = useRef(null);
+  const MIN_ZOOM = 15;  // minimum visible points (most zoomed in)
+  const MAX_ZOOM_FACTOR = 1; // 1 = show all data
+
+  // Reset zoom when new prediction loads
+  useEffect(() => {
+    if (chartData.length > 0) setZoomWindow(Math.min(60, chartData.length));
+  }, [prediction]);
+
+  // Slice chart data based on zoom level
+  const visibleData = useMemo(() => {
+    if (chartData.length === 0) return [];
+    const windowSize = Math.min(zoomWindow, chartData.length);
+    // Center the view around the "today" line (where actual meets predicted)
+    const todayIdx = prediction ? prediction.chart_data.actual.length : chartData.length;
+    const halfWindow = Math.floor(windowSize / 2);
+    let start = Math.max(0, todayIdx - halfWindow);
+    let end = start + windowSize;
+    if (end > chartData.length) {
+      end = chartData.length;
+      start = Math.max(0, end - windowSize);
+    }
+    return chartData.slice(start, end);
+  }, [chartData, zoomWindow, prediction]);
+
+  // Scroll/pinch zoom handler
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const delta = e.deltaY;
+    setZoomWindow(prev => {
+      if (delta > 0) {
+        // Scroll down = zoom out (show more data)
+        return Math.min(chartData.length, prev + Math.max(3, Math.floor(prev * 0.1)));
+      } else {
+        // Scroll up = zoom in (show less data, more detail)
+        return Math.max(MIN_ZOOM, prev - Math.max(3, Math.floor(prev * 0.1)));
+      }
+    });
+  }, [chartData.length]);
+
+  // Attach wheel listener with passive: false so we can preventDefault
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   const p = prediction;
 
@@ -219,8 +268,11 @@ export default function PredictorPage() {
           {/* Price Chart */}
           <div className="card mb-4" style={{ padding: 20 }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="font-label" style={{ color: 'var(--text-muted)', fontSize: 9 }}>PRICE CHART · ACTUAL vs PREDICTED</div>
-              <div className="flex items-center gap-4">
+              <div>
+                <div className="font-label" style={{ color: 'var(--text-muted)', fontSize: 9 }}>PRICE CHART · ACTUAL vs PREDICTED</div>
+                <div className="font-mono mt-1" style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.7 }}>Scroll or pinch to zoom · Hover for details</div>
+              </div>
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <div style={{ width: 16, height: 2, background: 'var(--blue-data)' }} />
                   <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Actual</span>
@@ -231,27 +283,46 @@ export default function PredictorPage() {
                 </div>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={480}>
-              <ComposedChart data={chartData}>
-                <CartesianGrid stroke="var(--bg-border)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval={Math.max(1, Math.floor(chartData.length / 18))} />
-                <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)' }} domain={['auto', 'auto']} tickFormatter={v => `₹${v.toLocaleString('en-IN')}`} width={70} />
-                <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 4, fontSize: 11, color: 'var(--text-primary)' }} formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, '']} />
-                <ReferenceLine x={prediction?.chart_data?.actual?.[prediction.chart_data.actual.length - 1]?.date} stroke="var(--gold-dim)" strokeDasharray="3 3" label={{ value: 'Today', position: 'top', fill: 'var(--text-muted)', fontSize: 9 }} />
-                <Line type="monotone" dataKey="actual" stroke="var(--blue-data)" strokeWidth={2} dot={false} name="Actual" connectNulls={false} />
-                <Line type="monotone" dataKey="predicted" stroke="var(--gold-mid)" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Predicted" connectNulls={false} />
-                <Brush dataKey="date" height={28} stroke="var(--gold-dim)" fill="var(--bg-void)" tickFormatter={d => d.slice(5)} startIndex={Math.max(0, chartData.length - 60)} />
-              </ComposedChart>
-            </ResponsiveContainer>
-            {/* Chart Usage Guide */}
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
-              <div className="flex items-center justify-center gap-6">
-                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag slider handles to zoom</span>
-                <span style={{ color: 'var(--bg-border)' }}>|</span>
-                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Hover chart for price details</span>
-                <span style={{ color: 'var(--bg-border)' }}>|</span>
-                <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag slider center to pan timeline</span>
-              </div>
+            {/* Time range presets */}
+            <div className="flex items-center gap-2 mb-3">
+              {[
+                { label: '1M', days: 30 },
+                { label: '3M', days: 90 },
+                { label: '6M', days: 180 },
+                { label: '1Y', days: 365 },
+                { label: 'ALL', days: chartData.length },
+              ].map(r => (
+                <button
+                  key={r.label}
+                  onClick={() => setZoomWindow(Math.min(r.days, chartData.length))}
+                  className="font-label px-3 py-1 rounded-chip transition-colors"
+                  style={{
+                    fontSize: 9,
+                    cursor: 'pointer',
+                    color: zoomWindow === Math.min(r.days, chartData.length) ? 'var(--gold-mid)' : 'var(--text-muted)',
+                    background: zoomWindow === Math.min(r.days, chartData.length) ? 'rgba(201,168,76,0.08)' : 'transparent',
+                    border: `1px solid ${zoomWindow === Math.min(r.days, chartData.length) ? 'rgba(201,168,76,0.2)' : 'var(--bg-border)'}`,
+                  }}
+                >
+                  {r.label}
+                </button>
+              ))}
+              <span className="font-mono ml-auto" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                Showing {visibleData.length} of {chartData.length} days
+              </span>
+            </div>
+            <div ref={chartRef} style={{ cursor: 'zoom-in' }}>
+              <ResponsiveContainer width="100%" height={480}>
+                <ComposedChart data={visibleData}>
+                  <CartesianGrid stroke="var(--bg-border)" strokeDasharray="3 3" />
+                  <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval={Math.max(1, Math.floor(visibleData.length / 12))} />
+                  <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)' }} domain={['auto', 'auto']} tickFormatter={v => `₹${v.toLocaleString('en-IN')}`} width={70} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 4, fontSize: 11, color: 'var(--text-primary)' }} formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, '']} />
+                  <ReferenceLine x={prediction?.chart_data?.actual?.[prediction.chart_data.actual.length - 1]?.date} stroke="var(--gold-dim)" strokeDasharray="3 3" label={{ value: 'Today', position: 'top', fill: 'var(--text-muted)', fontSize: 9 }} />
+                  <Line type="monotone" dataKey="actual" stroke="var(--blue-data)" strokeWidth={2} dot={false} name="Actual" connectNulls={false} />
+                  <Line type="monotone" dataKey="predicted" stroke="var(--gold-mid)" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Predicted" connectNulls={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
