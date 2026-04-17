@@ -52,7 +52,7 @@ NIFTY50_TICKERS = {
     "CDSL": {"name": "CDSL Ltd", "sector": "Financial Services"},
     "WAAREEENER": {"name": "Waaree Energies Ltd", "sector": "Renewable Energy"},
 }
-
+    
 
 def _compute_rsi(prices, period=14):
     """Compute Relative Strength Index."""
@@ -235,20 +235,27 @@ async def predict_stock(symbol: str, days: int = 30):
         else:
             trend = "NEUTRAL"
 
-        # Prepare chart data (last 90 days + predictions)
+        # Prepare chart data — use ALL historical data for a dense chart
         chart_actual = []
-        for i in range(max(0, len(dates) - 90), len(dates)):
+        for i in range(len(dates)):
             chart_actual.append({"date": dates[i], "price": round(prices[i], 2), "type": "actual"})
 
-        # Future dates
+        # Future dates — only trading days (skip weekends)
         last_date = datetime.strptime(dates[-1], "%Y-%m-%d")
         chart_predicted = []
-        for i, pred in enumerate(pred_30d):
-            future_date = last_date + timedelta(days=i + 1)
-            # Skip weekends
-            while future_date.weekday() >= 5:
-                future_date += timedelta(days=1)
-            chart_predicted.append({"date": future_date.strftime("%Y-%m-%d"), "price": pred, "type": "predicted"})
+        trading_days_added = 0
+        day_offset = 1
+        while trading_days_added < len(pred_30d):
+            future_date = last_date + timedelta(days=day_offset)
+            day_offset += 1
+            if future_date.weekday() >= 5:  # Skip Saturday(5) and Sunday(6)
+                continue
+            chart_predicted.append({
+                "date": future_date.strftime("%Y-%m-%d"),
+                "price": pred_30d[trading_days_added],
+                "type": "predicted"
+            })
+            trading_days_added += 1
 
         # Volume analysis
         avg_volume = int(np.mean(volumes[-20:])) if volumes else 0

@@ -6,7 +6,7 @@ import { formatINR } from '../utils/formatters';
 
 const API = 'http://localhost:8000';
 
-function PredictionGauge({ value, label, confidence }) {
+function PredictionGauge({ value, label, confidence, targetPrice, currentPrice }) {
   const isPositive = value >= 0;
   const color = isPositive ? 'var(--green-data)' : 'var(--red-data)';
 
@@ -16,6 +16,18 @@ function PredictionGauge({ value, label, confidence }) {
       <div className="font-mono" style={{ fontSize: 28, color, fontWeight: 600 }}>
         {value >= 0 ? '+' : ''}{value.toFixed(1)}%
       </div>
+      {targetPrice != null && (
+        <div className="mt-1">
+          <span className="font-mono" style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>
+            ₹{targetPrice.toLocaleString('en-IN')}
+          </span>
+          {currentPrice != null && (
+            <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>
+              from ₹{currentPrice.toLocaleString('en-IN')}
+            </span>
+          )}
+        </div>
+      )}
       <div className="mt-2 flex items-center justify-center gap-2">
         <div style={{ width: 60, height: 4, background: 'var(--bg-border)', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{ width: `${confidence}%`, height: '100%', background: 'var(--gold-mid)', borderRadius: 2 }} />
@@ -93,10 +105,17 @@ export default function PredictorPage() {
     }
   }, [symbol]);
 
-  const chartData = prediction ? [
-    ...prediction.chart_data.actual.map(d => ({ ...d, actual: d.price })),
-    ...prediction.chart_data.predicted.map(d => ({ ...d, predicted: d.price })),
-  ] : [];
+  const chartData = prediction ? (() => {
+    const actualPoints = prediction.chart_data.actual.map(d => ({ ...d, actual: d.price }));
+    const predictedPoints = prediction.chart_data.predicted.map(d => ({ ...d, predicted: d.price }));
+    // Bridge: add last actual price as the first predicted point so the line connects smoothly
+    const lastActual = actualPoints[actualPoints.length - 1];
+    if (lastActual && predictedPoints.length > 0) {
+      const bridge = { date: lastActual.date, predicted: lastActual.actual, actual: lastActual.actual };
+      return [...actualPoints, bridge, ...predictedPoints];
+    }
+    return [...actualPoints, ...predictedPoints];
+  })() : [];
 
   const p = prediction;
 
@@ -193,8 +212,8 @@ export default function PredictorPage() {
 
           {/* Prediction Cards */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <PredictionGauge value={p.predictions['7_day'].change_pct} label="7-DAY FORECAST" confidence={p.predictions['7_day'].confidence} />
-            <PredictionGauge value={p.predictions['30_day'].change_pct} label="30-DAY FORECAST" confidence={p.predictions['30_day'].confidence} />
+            <PredictionGauge value={p.predictions['7_day'].change_pct} label="7-DAY FORECAST" confidence={p.predictions['7_day'].confidence} targetPrice={p.predictions['7_day'].target} currentPrice={p.current_price} />
+            <PredictionGauge value={p.predictions['30_day'].change_pct} label="30-DAY FORECAST" confidence={p.predictions['30_day'].confidence} targetPrice={p.predictions['30_day'].target} currentPrice={p.current_price} />
           </div>
 
           {/* Price Chart */}
@@ -203,7 +222,7 @@ export default function PredictorPage() {
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={chartData}>
                 <CartesianGrid stroke="var(--bg-border)" strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval="preserveStartEnd" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} interval={Math.max(1, Math.floor(chartData.length / 15))} />
                 <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted)' }} domain={['auto', 'auto']} tickFormatter={v => `₹${v.toLocaleString('en-IN')}`} />
                 <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 4, fontSize: 11, color: 'var(--text-primary)' }} formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, '']} />
                 <Line type="monotone" dataKey="actual" stroke="var(--blue-data)" strokeWidth={2} dot={false} name="Actual" />
