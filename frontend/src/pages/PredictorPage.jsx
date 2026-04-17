@@ -220,7 +220,16 @@ export default function PredictorPage() {
           <div className="card mb-4" style={{ padding: 20 }}>
             <div className="flex items-center justify-between mb-4">
               <div className="font-label" style={{ color: 'var(--text-muted)', fontSize: 9 }}>PRICE CHART · ACTUAL vs PREDICTED</div>
-              <div className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Drag the slider below to zoom · Scroll to pan</div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div style={{ width: 16, height: 2, background: 'var(--blue-data)' }} />
+                  <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Actual</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div style={{ width: 16, height: 2, background: 'var(--gold-mid)', borderTop: '1px dashed var(--gold-mid)' }} />
+                  <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Predicted</span>
+                </div>
+              </div>
             </div>
             <ResponsiveContainer width="100%" height={480}>
               <ComposedChart data={chartData}>
@@ -234,6 +243,32 @@ export default function PredictorPage() {
                 <Brush dataKey="date" height={28} stroke="var(--gold-dim)" fill="var(--bg-void)" tickFormatter={d => d.slice(5)} startIndex={Math.max(0, chartData.length - 60)} />
               </ComposedChart>
             </ResponsiveContainer>
+            {/* Chart Usage Guide */}
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--bg-border)' }}>
+              <div className="flex items-start gap-6">
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 14 }}>🔍</span>
+                  <div>
+                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>ZOOM</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag the handles on the slider bar above to zoom into any date range</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 14 }}>👆</span>
+                  <div>
+                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>DETAILS</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Hover over any point on the chart to see exact price and date</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: 14 }}>↔️</span>
+                  <div>
+                    <div className="font-label" style={{ fontSize: 9, color: 'var(--gold-mid)', marginBottom: 2 }}>PAN</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Drag the center of the slider bar to pan across the timeline</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">

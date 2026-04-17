@@ -253,22 +253,30 @@ async def predict_stock(symbol: str, days: int = 30):
         for i in range(len(dates)):
             chart_actual.append({"date": dates[i], "price": round(prices[i], 2), "type": "actual"})
 
-        # Future dates — only trading days (skip weekends)
+        # Future dates — include ALL calendar days for a continuous chart
+        # The model generates 30 trading-day predictions; we interpolate weekends
         last_date = datetime.strptime(dates[-1], "%Y-%m-%d")
         chart_predicted = []
-        trading_days_added = 0
-        day_offset = 1
-        while trading_days_added < len(pred_30d):
+        trading_day_idx = 0
+        last_predicted_price = pred_30d[0] if pred_30d else prices[-1]
+        
+        # We generate enough calendar days to cover all 30 trading-day predictions
+        for day_offset in range(1, 50):  # 50 calendar days covers ~30 trading days
             future_date = last_date + timedelta(days=day_offset)
-            day_offset += 1
-            if future_date.weekday() >= 5:  # Skip Saturday(5) and Sunday(6)
-                continue
+            
+            if future_date.weekday() < 5:  # Weekday = trading day
+                if trading_day_idx < len(pred_30d):
+                    last_predicted_price = pred_30d[trading_day_idx]
+                    trading_day_idx += 1
+                else:
+                    break  # All trading day predictions used
+            # For weekends, carry forward the last trading day's price
+            
             chart_predicted.append({
                 "date": future_date.strftime("%Y-%m-%d"),
-                "price": pred_30d[trading_days_added],
+                "price": round(last_predicted_price, 2),
                 "type": "predicted"
             })
-            trading_days_added += 1
 
         # Volume analysis
         avg_volume = int(np.mean(volumes[-20:])) if volumes else 0
