@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import SlotCounter from 'react-slot-counter';
@@ -22,6 +22,7 @@ export default function XRayPage() {
   const { portfolioData, loadSampleData } = usePortfolio();
   const [sortField, setSortField] = useState('value');
   const [sortDir, setSortDir] = useState(-1);
+  const [selectedCell, setSelectedCell] = useState(null);
   const chartData = React.useMemo(() => generateChartData(), []);
 
   useEffect(() => { if (!portfolioData) loadSampleData(); }, []);
@@ -78,11 +79,11 @@ export default function XRayPage() {
             <div style={{ height: 280 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="month" tick={{ fill: '#52525F', fontSize: 10, fontFamily: 'IBM Plex Mono' }} axisLine={{ stroke: '#1F1F2C' }} tickLine={false} />
-                  <YAxis tick={{ fill: '#52525F', fontSize: 10, fontFamily: 'IBM Plex Mono' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#18181F', border: '1px solid #1F1F2C', borderRadius: 6, fontFamily: 'IBM Plex Mono', fontSize: 11 }} />
-                  <Line type="monotone" dataKey="portfolio" stroke="#C9A84C" strokeWidth={2} dot={false} name="Portfolio" />
-                  <Line type="monotone" dataKey="nifty" stroke="#52525F" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Nifty 50" />
+                  <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'IBM Plex Mono' }} axisLine={{ stroke: 'var(--bg-border)' }} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'IBM Plex Mono' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 6, fontFamily: 'IBM Plex Mono', fontSize: 11, color: 'var(--text-primary)' }} labelStyle={{ color: 'var(--text-primary)' }} itemStyle={{ color: 'var(--text-secondary)' }} />
+                  <Line type="monotone" dataKey="portfolio" stroke="var(--gold-mid)" strokeWidth={2} dot={false} name="Portfolio" />
+                  <Line type="monotone" dataKey="nifty" stroke="var(--text-muted)" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Nifty 50" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -95,7 +96,7 @@ export default function XRayPage() {
         <div className="card mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="font-label" style={{ color: 'var(--text-muted)', fontSize: 9 }}>FUND OVERLAP HEATMAP</div>
-            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Cells above 40% indicate dangerous overlap</div>
+            <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>Click any cell to see shared stock details</div>
           </div>
           <div className="overflow-x-auto">
             <div style={{ display: 'grid', gridTemplateColumns: `120px repeat(${pd.funds.length}, 1fr)`, gap: 2 }}>
@@ -111,15 +112,21 @@ export default function XRayPage() {
                     {pd.funds[i].name.split(' Fund')[0]}
                   </div>
                   {row.map((val, j) => {
-                    const bg = i === j ? 'var(--bg-raised)' : val > 0.4 ? 'rgba(184,64,64,0.35)' : val > 0.2 ? 'rgba(184,64,64,0.15)' : 'rgba(31,31,44,0.3)';
+                    const isSelected = selectedCell && selectedCell.i === i && selectedCell.j === j;
+                    const bg = i === j ? 'var(--bg-raised)' : val > 0.4 ? 'rgba(184,64,64,0.35)' : val > 0.2 ? 'rgba(184,64,64,0.15)' : 'var(--bg-raised)';
                     return (
                       <div
                         key={j}
-                        className="flex items-center justify-center font-mono"
-                        style={{ aspectRatio: '1', background: bg, fontSize: 9, color: 'var(--text-secondary)', borderRadius: 2, cursor: 'default' }}
-                        title={`${pd.funds[i].name} × ${pd.funds[j].name}: ${(val * 100).toFixed(0)}%`}
+                        className="flex items-center justify-center font-mono transition-all"
+                        onClick={() => i !== j && setSelectedCell(isSelected ? null : { i, j, val })}
+                        style={{
+                          aspectRatio: '1', background: bg, fontSize: 9, color: 'var(--text-secondary)', borderRadius: 2,
+                          cursor: i === j ? 'default' : 'pointer',
+                          border: isSelected ? '2px solid var(--gold-mid)' : '2px solid transparent',
+                          transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                        }}
                       >
-                        {i === j ? '—' : `${(val * 100).toFixed(0)}`}
+                        {i === j ? '—' : `${(val * 100).toFixed(0)}%`}
                       </div>
                     );
                   })}
@@ -127,11 +134,77 @@ export default function XRayPage() {
               ))}
             </div>
           </div>
+
+          {/* Legend */}
           <div className="flex items-center gap-4 mt-4">
-            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'rgba(31,31,44,0.3)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>{'< 20%'}</span></div>
-            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'rgba(184,64,64,0.15)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>20–40%</span></div>
-            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'rgba(184,64,64,0.35)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>{'>40% ⚠'}</span></div>
+            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'var(--bg-raised)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>{'< 20% (Safe)'}</span></div>
+            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'rgba(184,64,64,0.15)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>20–40% (Watch)</span></div>
+            <div className="flex items-center gap-1"><div style={{ width: 12, height: 12, background: 'rgba(184,64,64,0.35)', borderRadius: 2 }} /><span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>{'>40% (Dangerous)'}</span></div>
           </div>
+
+          {/* Detail Panel — appears when a cell is clicked */}
+          {selectedCell && selectedCell.i !== selectedCell.j && (() => {
+            const fundA = pd.funds[selectedCell.i];
+            const fundB = pd.funds[selectedCell.j];
+            const overlapPct = (selectedCell.val * 100).toFixed(0);
+            const sharedHoldings = fundA.topHoldings.filter(h => fundB.topHoldings.includes(h));
+            const severity = selectedCell.val > 0.4 ? { label: 'DANGEROUS', color: 'var(--red-data)', bg: 'rgba(184,64,64,0.08)' }
+              : selectedCell.val > 0.2 ? { label: 'MODERATE', color: 'var(--gold-mid)', bg: 'rgba(201,168,76,0.06)' }
+              : { label: 'LOW', color: 'var(--green-data)', bg: 'rgba(46,158,104,0.06)' };
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 rounded-card"
+                style={{ padding: 20, background: severity.bg, border: `1px solid var(--bg-border)` }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-label px-2 py-0.5 rounded-chip" style={{ fontSize: 8, color: severity.color, border: `1px solid ${severity.color}33` }}>{severity.label} OVERLAP</span>
+                    <span className="font-mono" style={{ fontSize: 20, fontWeight: 600, color: severity.color }}>{overlapPct}%</span>
+                  </div>
+                  <button onClick={() => setSelectedCell(null)} className="font-mono" style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}>Close</button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <div className="font-label mb-1" style={{ fontSize: 8, color: 'var(--text-muted)' }}>FUND A</div>
+                    <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-primary)' }}>{fundA.name}</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{fundA.category} · XIRR {fundA.xirr}%</div>
+                  </div>
+                  <div>
+                    <div className="font-label mb-1" style={{ fontSize: 8, color: 'var(--text-muted)' }}>FUND B</div>
+                    <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-primary)' }}>{fundB.name}</div>
+                    <div className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{fundB.category} · XIRR {fundB.xirr}%</div>
+                  </div>
+                </div>
+
+                {sharedHoldings.length > 0 && (
+                  <div className="mb-4">
+                    <div className="font-label mb-2" style={{ fontSize: 8, color: 'var(--text-muted)' }}>SHARED STOCK HOLDINGS ({sharedHoldings.length} stocks)</div>
+                    <div className="flex flex-wrap gap-2">
+                      {sharedHoldings.map(stock => (
+                        <span key={stock} className="font-mono px-2 py-1 rounded-chip" style={{ fontSize: 10, color: severity.color, background: 'var(--bg-surface)', border: '1px solid var(--bg-border)' }}>{stock}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-card" style={{ padding: 12, background: 'var(--bg-surface)', border: '1px solid var(--bg-border)' }}>
+                  <div className="font-label mb-1" style={{ fontSize: 8, color: 'var(--gold-mid)' }}>WHAT THIS MEANS</div>
+                  <div className="font-sans" style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                    {selectedCell.val > 0.4
+                      ? `These two funds share ${overlapPct}% of their top holdings. This means a significant portion of your money in both funds is invested in the same companies like ${sharedHoldings.slice(0, 3).join(', ')}. You are paying two expense ratios for essentially the same exposure. Consider consolidating into one fund to save on costs and improve diversification.`
+                      : selectedCell.val > 0.2
+                      ? `These funds share ${overlapPct}% overlap through stocks like ${sharedHoldings.slice(0, 3).join(', ')}. This is moderate — not alarming, but worth monitoring. If both funds are in similar categories, you may benefit from replacing one with a fund from a different segment.`
+                      : `Only ${overlapPct}% overlap — these funds are well diversified from each other. ${sharedHoldings.length > 0 ? `They share only ${sharedHoldings.join(', ')}.` : 'They hold completely different stocks.'} This is good portfolio construction.`
+                    }
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
       </ClipPathWipe>
 

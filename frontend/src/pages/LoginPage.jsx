@@ -38,6 +38,15 @@ export default function LoginPage() {
         transition={{ duration: 0.6 }}
         className="relative w-full max-w-md"
       >
+        {/* Back Link */}
+        <div className="mb-6 relative z-10">
+          <Link to="/" className="inline-flex items-center gap-2 font-mono text-xs" style={{ color: 'var(--text-muted)', transition: 'color 0.2s', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            BACK TO HOME
+          </Link>
+        </div>
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/">

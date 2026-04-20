@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import SlotCounter from 'react-slot-counter';
@@ -10,31 +10,91 @@ export default function RadarPage() {
   const [filter, setFilter] = useState('ALL');
   const [dateRange, setDateRange] = useState('30d');
   const [search, setSearch] = useState('');
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!portfolioData) loadSampleData();
     if (signals.length === 0) refreshSignals();
   }, []);
 
-  const filtered = signals.filter(s => {
-    if (filter !== 'ALL' && s.signalType !== filter) return false;
-    if (search && !s.company.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  // Auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const insiderCount = signals.filter(s => s.signalType === 'INSIDER_BUY').length;
-  const bulkCount = signals.filter(s => s.signalType === 'BULK_DEAL').length;
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshSignals();
+      setLastUpdated(new Date());
+    } catch (e) {
+      // fallback handled by context
+    }
+    setTimeout(() => setIsRefreshing(false), 800);
+  }, [refreshSignals]);
+
+  // Date range filter — actually filters by signal date
+  const dateFiltered = useMemo(() => {
+    const now = new Date();
+    const daysMap = { '7d': 7, '30d': 30, '90d': 90 };
+    const maxDaysAgo = daysMap[dateRange] || 30;
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - maxDaysAgo);
+
+    return signals.filter(s => {
+      const signalDate = new Date(s.date);
+      return signalDate >= cutoff;
+    });
+  }, [signals, dateRange]);
+
+  // Type filter + search
+  const filtered = useMemo(() => {
+    return dateFiltered.filter(s => {
+      if (filter !== 'ALL' && s.signalType !== filter) return false;
+      if (search && !s.company.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [dateFiltered, filter, search]);
+
+  const insiderCount = dateFiltered.filter(s => s.signalType === 'INSIDER_BUY').length;
+  const bulkCount = dateFiltered.filter(s => s.signalType === 'BULK_DEAL').length;
+
+  // Check if any signal is actually live (from API) vs sample
+  const hasLiveData = signals.some(s => s.live === true);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-serif-display" style={{ fontSize: 28, color: 'var(--text-primary)' }}>Opportunity Radar</h1>
+          <div className="font-mono mt-1" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+            Last updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · {lastUpdated.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          </div>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefresh}
+            className="font-label px-3 py-1.5 rounded-chip transition-all"
+            style={{
+              fontSize: 9, cursor: 'pointer',
+              color: 'var(--gold-mid)',
+              background: 'rgba(201,168,76,0.08)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              opacity: isRefreshing ? 0.5 : 1,
+            }}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? 'REFRESHING...' : 'REFRESH NOW'}
+          </button>
           <div className="flex items-center gap-1">
-            <span className="pulse-dot inline-block rounded-full" style={{ width: 6, height: 6, background: 'var(--green-data)' }} />
-            <span className="font-label" style={{ color: 'var(--green-data)', fontSize: 10 }}>LIVE</span>
+            <span className="pulse-dot inline-block rounded-full" style={{ width: 6, height: 6, background: hasLiveData ? 'var(--green-data)' : 'var(--gold-mid)' }} />
+            <span className="font-label" style={{ color: hasLiveData ? 'var(--green-data)' : 'var(--gold-mid)', fontSize: 10 }}>
+              {hasLiveData ? 'LIVE' : 'SAMPLE'}
+            </span>
           </div>
           <span className="font-label" style={{ color: 'var(--gold-mid)', fontSize: 10 }}>RADAR AGENT</span>
         </div>
@@ -43,7 +103,7 @@ export default function RadarPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'TOTAL SIGNALS', value: String(signals.length), color: 'var(--text-primary)' },
+          { label: 'TOTAL SIGNALS', value: String(dateFiltered.length), color: 'var(--text-primary)' },
           { label: 'INSIDER BUYS', value: String(insiderCount), color: 'var(--green-data)' },
           { label: 'BULK DEALS', value: String(bulkCount), color: 'var(--blue-data)' },
         ].map((s, i) => (
@@ -89,7 +149,7 @@ export default function RadarPage() {
                 border: `1px solid ${dateRange === dr ? 'var(--bg-border)' : 'transparent'}`,
               }}
             >
-              {dr}
+              {dr.toUpperCase()}
             </button>
           ))}
         </div>
@@ -102,9 +162,9 @@ export default function RadarPage() {
             className="font-mono"
             style={{ fontSize: 11, padding: '6px 12px', background: 'var(--bg-void)', border: '1px solid var(--bg-border)', borderRadius: 4, color: 'var(--text-primary)', outline: 'none', width: 180 }}
           />
-          <button className="direction-underline font-label" style={{ color: 'var(--gold-mid)', fontSize: 9, background: 'none', border: 'none', cursor: 'pointer' }}>
-            EXPORT CSV →
-          </button>
+          <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+            {filtered.length} of {signals.length}
+          </span>
         </div>
       </div>
 
@@ -124,6 +184,11 @@ export default function RadarPage() {
                 ? { bg: 'rgba(46,158,104,0.1)', color: 'var(--green-data)', border: 'rgba(46,158,104,0.2)' }
                 : { bg: 'rgba(58,127,212,0.1)', color: 'var(--blue-data)', border: 'rgba(58,127,212,0.2)' };
 
+              // Show relative date label
+              const signalDate = new Date(signal.date);
+              const daysAgo = Math.floor((new Date() - signalDate) / 86400000);
+              const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
+
               return (
                 <motion.tr
                   key={i}
@@ -139,7 +204,10 @@ export default function RadarPage() {
                       {signal.signalType.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{signal.date}</td>
+                  <td className="py-3 px-4">
+                    <div className="font-mono" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{signal.date}</div>
+                    <div className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>{dateLabel}</div>
+                  </td>
                   <td className="py-3 px-4 font-mono" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>₹{(signal.value / 10000000).toFixed(1)}Cr</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
@@ -174,19 +242,18 @@ export default function RadarPage() {
         )}
       </div>
 
-      {/* Pagination */}
+      {/* Footer info */}
       <div className="flex items-center justify-between mt-4">
         <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          Showing {filtered.length} of {signals.length} signals
+          Showing {filtered.length} of {signals.length} signals · {dateRange.toUpperCase()} range
         </span>
-        <div className="flex gap-1">
-          <span className="font-mono px-2 py-1 rounded-btn" style={{ fontSize: 10, color: 'var(--gold-mid)', background: 'var(--bg-raised)', border: '1px solid var(--bg-border)', cursor: 'pointer' }}>1</span>
-          <span className="font-mono px-2 py-1 rounded-btn" style={{ fontSize: 10, color: 'var(--text-muted)', cursor: 'pointer' }}>2</span>
-        </div>
+        <span className="font-mono" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+          Auto-refreshes every 5 min
+        </span>
       </div>
 
       <div className="disclaimer mt-6">
-        Signal data sourced from BSE/NSE public disclosures. Confidence scores are AI-generated estimates. This is not investment advice. Consult a SEBI-registered advisor.
+        Signal data sourced from BSE/NSE public disclosures and yfinance live market data. Confidence scores are AI-generated estimates. This is not investment advice. Consult a SEBI-registered advisor.
       </div>
     </div>
   );

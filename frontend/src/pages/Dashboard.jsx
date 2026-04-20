@@ -36,14 +36,14 @@ function StatCard({ label, value, sub, color, pulse, delay = 0 }) {
 
 /* Overlap Cell */
 function OverlapCell({ value, fundA, fundB }) {
-  const bg = value > 0.4 ? 'rgba(184,64,64,0.3)' : value > 0.2 ? 'rgba(184,64,64,0.15)' : 'rgba(31,31,44,0.5)';
+  const bg = value > 0.4 ? 'rgba(184,64,64,0.3)' : value > 0.2 ? 'rgba(184,64,64,0.15)' : 'var(--bg-raised)';
   return (
     <div
-      className="flex items-center justify-center font-mono cursor-default relative group"
-      style={{ width: '100%', aspectRatio: '1', background: bg, fontSize: 10, color: 'var(--text-secondary)', borderRadius: 2 }}
-      title={`${fundA} × ${fundB}: ${(value * 100).toFixed(0)}%`}
+      className="flex items-center justify-center font-mono relative group"
+      style={{ width: '100%', aspectRatio: '1', background: bg, fontSize: 10, color: 'var(--text-secondary)', borderRadius: 2, cursor: value === 1 ? 'default' : 'pointer' }}
+      title={`${fundA} × ${fundB}: ${(value * 100).toFixed(0)}% overlap`}
     >
-      {value === 1 ? '—' : (value * 100).toFixed(0)}
+      {value === 1 ? '—' : `${(value * 100).toFixed(0)}%`}
     </div>
   );
 }

@@ -203,71 +203,108 @@ function generateSampleData(isAlt = false) {
   };
 }
 
-const SAMPLE_SIGNALS = [
-  {
-    company: 'Tata Motors Ltd',
-    signalType: 'INSIDER_BUY',
-    date: '2026-03-17',
-    value: 28500000,
-    confidence: 92,
-    description: 'Director acquired 15,000 shares at ₹1,900. Consistent buying pattern over 3 months.',
-    source: 'BSE Insider Trading Disclosures'
-  },
-  {
-    company: 'Reliance Industries Ltd',
-    signalType: 'BULK_DEAL',
-    date: '2026-03-16',
-    value: 425000000,
-    confidence: 85,
-    description: 'Goldman Sachs acquired 1.2L shares via block deal. Represents institutional confidence.',
-    source: 'BSE Bulk Deal Data'
-  },
-  {
-    company: 'HDFC Bank Ltd',
-    signalType: 'INSIDER_BUY',
-    date: '2026-03-15',
-    value: 18200000,
-    confidence: 88,
-    description: 'CFO purchased 8,500 shares at ₹2,141. Second purchase this quarter.',
-    source: 'BSE Insider Trading Disclosures'
-  },
-  {
-    company: 'Infosys Ltd',
-    signalType: 'BULK_DEAL',
-    date: '2026-03-14',
-    value: 312000000,
-    confidence: 78,
-    description: 'BlackRock increased stake by 0.3% via market purchase. Pattern suggests long-term accumulation.',
-    source: 'NSE Bulk Deal Data'
-  },
-  {
-    company: 'Bajaj Finance Ltd',
-    signalType: 'INSIDER_BUY',
-    date: '2026-03-13',
-    value: 45600000,
-    confidence: 94,
-    description: 'MD & CEO acquired 5,200 shares at ₹8,769. Highest single purchase by management this year.',
-    source: 'BSE Insider Trading Disclosures'
-  },
-  {
-    company: 'Asian Paints Ltd',
-    signalType: 'BULK_DEAL',
-    date: '2026-03-12',
-    value: 189000000,
-    confidence: 72,
-    description: 'FII exit — Vanguard reduced stake by 0.5%. Monitor for further selling pressure.',
-    source: 'NSE Bulk Deal Data'
-  },
-  {
-    company: 'Larsen & Toubro Ltd',
-    signalType: 'INSIDER_BUY',
-    date: '2026-03-11',
-    value: 32100000,
-    confidence: 86,
-    description: 'Whole-time Director acquired 4,800 shares. Third consecutive insider buy this month.',
-    source: 'BSE Insider Trading Disclosures'
-  }
-];
+function generateSampleSignals() {
+  const today = new Date();
+  const dayStr = (daysAgo) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().split('T')[0];
+  };
+  return [
+    {
+      company: 'Tata Motors Ltd',
+      signalType: 'INSIDER_BUY',
+      date: dayStr(0),
+      value: 28500000,
+      confidence: 92,
+      description: 'Director acquired 15,000 shares at ₹1,900. Consistent buying pattern over 3 months.',
+      source: 'BSE Insider Trading Disclosures'
+    },
+    {
+      company: 'Reliance Industries Ltd',
+      signalType: 'BULK_DEAL',
+      date: dayStr(1),
+      value: 425000000,
+      confidence: 85,
+      description: 'Goldman Sachs acquired 1.2L shares via block deal. Represents institutional confidence.',
+      source: 'BSE Bulk Deal Data'
+    },
+    {
+      company: 'HDFC Bank Ltd',
+      signalType: 'INSIDER_BUY',
+      date: dayStr(1),
+      value: 18200000,
+      confidence: 88,
+      description: 'CFO purchased 8,500 shares at ₹2,141. Second purchase this quarter.',
+      source: 'BSE Insider Trading Disclosures'
+    },
+    {
+      company: 'Infosys Ltd',
+      signalType: 'BULK_DEAL',
+      date: dayStr(2),
+      value: 312000000,
+      confidence: 78,
+      description: 'BlackRock increased stake by 0.3% via market purchase. Pattern suggests long-term accumulation.',
+      source: 'NSE Bulk Deal Data'
+    },
+    {
+      company: 'Bajaj Finance Ltd',
+      signalType: 'INSIDER_BUY',
+      date: dayStr(3),
+      value: 45600000,
+      confidence: 94,
+      description: 'MD & CEO acquired 5,200 shares at ₹8,769. Highest single purchase by management this year.',
+      source: 'BSE Insider Trading Disclosures'
+    },
+    {
+      company: 'Asian Paints Ltd',
+      signalType: 'BULK_DEAL',
+      date: dayStr(4),
+      value: 189000000,
+      confidence: 72,
+      description: 'FII exit — Vanguard reduced stake by 0.5%. Monitor for further selling pressure.',
+      source: 'NSE Bulk Deal Data'
+    },
+    {
+      company: 'Larsen & Toubro Ltd',
+      signalType: 'INSIDER_BUY',
+      date: dayStr(5),
+      value: 32100000,
+      confidence: 86,
+      description: 'Whole-time Director acquired 4,800 shares. Third consecutive insider buy this month.',
+      source: 'BSE Insider Trading Disclosures'
+    },
+    {
+      company: 'State Bank of India',
+      signalType: 'BULK_DEAL',
+      date: dayStr(1),
+      value: 580000000,
+      confidence: 91,
+      description: 'Domestic fund houses accumulating ahead of Q4 results. Volume 3.2x average.',
+      source: 'NSE Live Data'
+    },
+    {
+      company: 'Bharti Airtel Ltd',
+      signalType: 'INSIDER_BUY',
+      date: dayStr(2),
+      value: 125000000,
+      confidence: 83,
+      description: 'Board member purchased 7,400 shares post tariff hike announcement. Telecom sector bullish.',
+      source: 'BSE Insider Trading Disclosures'
+    },
+    {
+      company: 'Sun Pharma Industries Ltd',
+      signalType: 'BULK_DEAL',
+      date: dayStr(3),
+      value: 210000000,
+      confidence: 87,
+      description: 'FII buying — Morgan Stanley increased stake. Pharma sector outperforming in defensive rotation.',
+      source: 'NSE Bulk Deal Data'
+    },
+  ];
+}
+
+const SAMPLE_SIGNALS = generateSampleSignals();
 
 import { useAuth } from './AuthContext';
 
